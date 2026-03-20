@@ -1,0 +1,16 @@
+{
+  "name": "slack-claude-mcp",
+  "version": "1.0.0",
+  "description": "Custom Slack MCP server for Claude Code - PULL-based with file upload support",
+  "license": "MIT",
+  "type": "module",
+  "bin": "./server.ts",
+  "scripts": {
+    "start": "bun server.ts",
+    "install-deps": "bun install --no-summary"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@slack/web-api": "^7.0.0"
+  }
+}
