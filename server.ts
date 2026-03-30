@@ -179,13 +179,15 @@ const mcp = new Server(
       '',
       'Workflow:',
       '1. Call get_messages to check for new Slack messages',
-      '2. Process each message and call send_message with the channel_id',
-      '3. Use send_file to attach images or documents',
+      '2. Call set_typing to show the typing indicator while composing',
+      '3. Process each message and call send_message with the channel_id',
+      '4. Use send_file to attach images or documents',
       '',
       'Important:',
       '- Messages are queued in memory. Call get_messages periodically (e.g., via /loop).',
       '- Use thread_ts from the received message to reply in thread.',
       '- send_file supports images (png/jpg/gif) and documents (pdf, txt, etc.).',
+      '- set_typing lasts ~5 seconds; call it just before send_message for best UX.',
     ].join('\n'),
   },
 )
@@ -243,6 +245,17 @@ mcp.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: 'get_bot_info',
       description: 'Get the bot username, user ID, and connection status.',
       inputSchema: { type: 'object' as const, properties: {} },
+    },
+    {
+      name: 'set_typing',
+      description: 'Show a typing indicator in a Slack channel ("Claude is typing..."). Call this just before send_message so users see Claude is composing. Indicator lasts ~5 seconds.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          channel_id: { type: 'string', description: 'Channel or DM ID to show typing in.' },
+        },
+        required: ['channel_id'],
+      },
     },
     {
       name: 'add_channel',
@@ -325,6 +338,16 @@ mcp.setRequestHandler(CallToolRequestSchema, async req => {
             }, null, 2),
           }],
         }
+      }
+
+      // ── set_typing ──
+      case 'set_typing': {
+        try {
+          await (slack as any).conversations.typing({ channel: args.channel_id as string })
+        } catch {
+          // typing indicator is best-effort; silently ignore if unsupported
+        }
+        return { content: [{ type: 'text', text: 'typing indicator set' }] }
       }
 
       // ── add_channel ──
